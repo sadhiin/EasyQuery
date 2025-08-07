@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+      - OPENAI_API_KEY=your_openai_api_key
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+# Example database service (optional)
+#  db:
+#    image: postgres:13
+#    environment:
+#      - POSTGRES_USER=user
+#      - POSTGRES_PASSWORD=password
+#      - POSTGRES_DB=mydatabase
+#    ports:
+#      - "5432:5432"
