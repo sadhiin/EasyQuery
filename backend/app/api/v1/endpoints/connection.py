@@ -14,7 +14,7 @@ async def connect_to_database(request: ConnectRequest):
     try:
         await db_manager.connect()
         db_connections[session_id] = db_manager
-        return JSONResponse(status_code=200, content={"message": "Database connected successfully!", "db_url": request.db_url})
+        return JSONResponse(status_code=200, content={"message": "Database connected successfully!"})
     except HTTPException as e:
         raise e
     except Exception as e:

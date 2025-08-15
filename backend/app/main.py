@@ -13,8 +13,7 @@ app = FastAPI(title="EasyQuery API", version="1.0.0")
 
 # Allow CORS for frontend communication
 origins = [
-    "http://localhost",
-    "http://localhost:8080",
+    "*",
     "http://127.0.0.1:8080",
 ]
 
