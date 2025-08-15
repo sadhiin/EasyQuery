@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let recognition;
 
     // Base URL for backend API
-    const API_BASE_URL = '/api';
+    const API_BASE_URL = '/api/v1';
 
     // --- Database Connection ---
     connectDbButton.addEventListener('click', async () => {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         connectionStatus.style.color = 'orange';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/connect`, {
+            const response = await fetch(`${API_BASE_URL}/connection/connect`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Fetch Database Schema ---
     async function fetchSchema() {
         try {
-            const response = await fetch(`${API_BASE_URL}/schema`);
+            const response = await fetch(`${API_BASE_URL}/query/schema`);
             const data = await response.json();
 
             if (response.ok) {
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         queryResults.style.color = 'orange';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/query`, {
+            const response = await fetch(`${API_BASE_URL}/query/query`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData();
             formData.append('audio_file', audioBlob, 'audio.wav');
 
-            const response = await fetch(`${API_BASE_URL}/speech-query`, {
+            const response = await fetch(`${API_BASE_URL}/query/speech-query`, {
                 method: 'POST',
                 body: formData
             });
