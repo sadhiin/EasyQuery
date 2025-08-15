@@ -7,8 +7,32 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>EasyQuery</h1>
-    <p>Chat with your database using natural language.</p>
+    <div class="container">
+        <h1>EasyQuery - Natural Language to SQL</h1>
+
+        <div class="db-connection">
+            <h2>Database Connection</h2>
+            <input type="text" id="dbUrl" placeholder="Enter Database URL (e.g., sqlite:///test.db)">
+            <button id="connectDb">Connect to Database</button>
+            <p id="connectionStatus"></p>
+        </div>
+
+        <div class="query-interface">
+            <h2>Query Database</h2>
+            <textarea id="naturalLanguageQuery" placeholder="Ask your database a question in natural language..."></textarea>
+            <button id="executeQuery">Execute Query (Text)</button>
+            <button id="startSpeech" >Start Speech</button>
+            <button id="stopSpeech" disabled>Stop Speech</button>
+        </div>
+
+        <div class="results-display">
+            <h2>Query Results</h2>
+            <pre id="queryResults"></pre>
+            <h3>Schema:</h3>
+            <pre id="dbSchema"></pre>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
