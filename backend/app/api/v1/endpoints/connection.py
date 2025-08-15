@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from app.models.pydantic_models import ConnectRequest
 from ..db import DatabaseManager
 from app.services.query_service import db_connections
 
 connection_router = APIRouter()
+
 
 @connection_router.post("/connect")
 async def connect_to_database(request: ConnectRequest):
@@ -12,7 +14,7 @@ async def connect_to_database(request: ConnectRequest):
     try:
         await db_manager.connect()
         db_connections[session_id] = db_manager
-        return {"message": "Database connected successfully!", "db_url": request.db_url}
+        return JSONResponse(status_code=200, content={"message": "Database connected successfully!", "db_url": request.db_url})
     except HTTPException as e:
         raise e
     except Exception as e:
