@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
     const dbUrlInput = document.getElementById('dbUrl');
     const connectDbButton = document.getElementById('connectDb');
     const connectionStatus = document.getElementById('connectionStatus');
@@ -9,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const queryResults = document.getElementById('queryResults');
     const dbSchemaDisplay = document.getElementById('dbSchema');
 
+    // LLM config elements (provider only)
+    const llmProvider = document.getElementById('llmProvider');
+    
+    // Tab elements
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
     // Speech recognition variables
     let mediaRecorder;
     let audioChunks = [];
@@ -16,21 +24,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Base URL for backend API
     const API_BASE_URL = '/api/v1';
+    console.log('EasyQuery frontend running. API_BASE_URL =', API_BASE_URL);
+
+    // Initialize tab functionality
+    function initTabs() {
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and panes
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding pane
+                button.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+    }
+
+    // Helper function to update status message with appropriate styling
+    function updateStatus(element, message, type) {
+        element.textContent = message;
+        // Remove all status classes
+        element.classList.remove('success', 'error', 'warning', 'info');
+        
+        // Add appropriate class based on type
+        if (type) {
+            element.classList.add(type);
+        }
+    }
+
+    // LLM config persistence (provider only)
+    function loadLlmConfig() {
+        try {
+            const cfg = JSON.parse(localStorage.getItem('llmConfig') || '{}');
+            if (cfg.provider && llmProvider) llmProvider.value = cfg.provider;
+        } catch {}
+    }
+    
+    function getLlmConfig() {
+        return {
+            provider: llmProvider ? llmProvider.value.trim() : ''
+        };
+    }
+    
+    if (llmProvider) {
+        llmProvider.addEventListener('change', () => {
+            const { provider } = getLlmConfig();
+            localStorage.setItem('llmConfig', JSON.stringify({ provider }));
+        });
+    }
 
     // --- Database Connection ---
     connectDbButton.addEventListener('click', async () => {
-        const dbUrl = dbUrlInput.value;
+        const dbUrl = dbUrlInput.value.trim();
         if (!dbUrl) {
-            connectionStatus.textContent = 'Please enter a database URL.';
-            connectionStatus.style.color = 'red';
+            updateStatus(connectionStatus, 'Please enter a database URL.', 'error');
             return;
         }
 
-        connectionStatus.textContent = 'Connecting...';
-        connectionStatus.style.color = 'orange';
+        updateStatus(connectionStatus, 'Connecting...', 'info');
 
         try {
-            const response = await fetch(`${API_BASE_URL}/connection/connect`, {
+            const url = `${API_BASE_URL}/connection/connect`;
+            console.log('Requesting', url);
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -40,17 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                connectionStatus.textContent = `Connected to ${data.db_url}`;
-                connectionStatus.style.color = 'green';
+                updateStatus(connectionStatus, `Connected to ${data.db_url}`, 'success');
                 fetchSchema(); // Fetch schema on successful connection
             } else {
-                connectionStatus.textContent = `Connection failed: ${data.detail || data.message}`;
-                connectionStatus.style.color = 'red';
+                updateStatus(connectionStatus, `Connection failed: ${data.detail || data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error connecting to database:', error);
-            connectionStatus.textContent = `Connection error: ${error.message}`;
-            connectionStatus.style.color = 'red';
+            updateStatus(connectionStatus, `Connection error: ${error.message}`, 'error');
         }
     });
 
@@ -64,26 +120,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 dbSchemaDisplay.textContent = JSON.stringify(data.schema, null, 2);
             } else {
                 dbSchemaDisplay.textContent = `Failed to fetch schema: ${data.detail || data.message}`;
-                dbSchemaDisplay.style.color = 'red';
+                dbSchemaDisplay.style.color = 'var(--danger-color)';
             }
         } catch (error) {
             console.error('Error fetching schema:', error);
             dbSchemaDisplay.textContent = `Error fetching schema: ${error.message}`;
-            dbSchemaDisplay.style.color = 'red';
+            dbSchemaDisplay.style.color = 'var(--danger-color)';
         }
     }
 
     // --- Execute Text Query ---
     executeQueryButton.addEventListener('click', async () => {
-        const queryText = naturalLanguageQuery.value;
+        const queryText = naturalLanguageQuery.value.trim();
         if (!queryText) {
-            queryResults.textContent = 'Please enter a query.';
-            queryResults.style.color = 'red';
+            updateStatus(queryResults, 'Please enter a query.', 'error');
             return;
         }
 
-        queryResults.textContent = 'Executing query...';
-        queryResults.style.color = 'orange';
+        const { provider } = getLlmConfig();
+        if (!provider) {
+            updateStatus(queryResults, 'Please configure LLM provider first.', 'error');
+            return;
+        }
+
+        updateStatus(queryResults, 'Executing query...', 'info');
 
         try {
             const response = await fetch(`${API_BASE_URL}/query/query`, {
@@ -91,30 +151,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ query_text: queryText })
+                body: JSON.stringify({ query_text: queryText, llm_provider: provider })
             });
             const data = await response.json();
 
             if (response.ok) {
                 queryResults.textContent = JSON.stringify(data.results, null, 2);
-                queryResults.style.color = 'black';
+                queryResults.style.color = 'var(--text-color, var(--dark-color))';
             } else {
-                queryResults.textContent = `Query failed: ${data.detail || data.message}`;
-                queryResults.style.color = 'red';
+                updateStatus(queryResults, `Query failed: ${data.detail || data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error executing query:', error);
-            queryResults.textContent = `Query error: ${error.message}`;
-            queryResults.style.color = 'red';
+            updateStatus(queryResults, `Query error: ${error.message}`, 'error');
         }
     });
 
     // --- Speech Recognition ---
     startSpeechButton.addEventListener('click', async () => {
+        const { provider } = getLlmConfig();
+        if (!provider) {
+            updateStatus(queryResults, 'Please configure LLM provider first.', 'error');
+            return;
+        }
+
         startSpeechButton.disabled = true;
         stopSpeechButton.disabled = false;
-        queryResults.textContent = 'Listening...';
-        queryResults.style.color = 'blue';
+        updateStatus(queryResults, 'Listening...', 'info');
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -135,8 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder.start();
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            queryResults.textContent = `Microphone access error: ${error.message}`;
-            queryResults.style.color = 'red';
+            updateStatus(queryResults, `Microphone access error: ${error.message}`, 'error');
             startSpeechButton.disabled = false;
             stopSpeechButton.disabled = true;
         }
@@ -145,15 +207,21 @@ document.addEventListener('DOMContentLoaded', () => {
     stopSpeechButton.addEventListener('click', () => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            queryResults.textContent = 'Processing speech...';
-            queryResults.style.color = 'orange';
+            updateStatus(queryResults, 'Processing speech...', 'warning');
         }
     });
 
     async function sendAudioToBackend(audioBlob) {
         try {
+            const { provider } = getLlmConfig();
+            if (!provider) {
+                updateStatus(queryResults, 'Please configure LLM provider first.', 'error');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('audio_file', audioBlob, 'audio.wav');
+            formData.append('llm_provider', provider);
 
             const response = await fetch(`${API_BASE_URL}/query/speech-query`, {
                 method: 'POST',
@@ -163,15 +231,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 queryResults.textContent = `Speech Query: "${data.text_query}"\nSQL: "${data.sql_query}"\nResults: ${JSON.stringify(data.results, null, 2)}`;
-                queryResults.style.color = 'black';
+                queryResults.style.color = 'var(--text-color, var(--dark-color))';
             } else {
-                queryResults.textContent = `Speech query failed: ${data.detail || data.message}`;
-                queryResults.style.color = 'red';
+                updateStatus(queryResults, `Speech query failed: ${data.detail || data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error sending audio to backend:', error);
-            queryResults.textContent = `Audio communication error: ${error.message}`;
-            queryResults.style.color = 'red';
+            updateStatus(queryResults, `Audio communication error: ${error.message}`, 'error');
         }
     }
+
+    // Initialize the application
+    initTabs();
+    loadLlmConfig();
 });
