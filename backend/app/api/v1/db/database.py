@@ -2,6 +2,8 @@ from sqlalchemy import create_engine, text, inspect, Engine
 from fastapi import HTTPException
 from typing import Optional
 import logging
+from decimal import Decimal
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,18 @@ class DatabaseManager:
             with self.engine.connect() as connection:
                 result = connection.execute(text(query))
                 if result.returns_rows:
-                    return [dict(row) for row in result.mappings()]
+                    rows = []
+                    for row in result.mappings():
+                        row_dict = {}
+                        for key, value in row.items():
+                            # Convert Decimal to float for JSON serialization
+                            if isinstance(value, Decimal):
+                                row_dict[key] = float(value)
+                            else:
+                                row_dict[key] = value
+                        rows.append(row_dict)
+                    # rows = CustomJSONResponse.render(result.mappings())
+                    return rows
                 return {"message": "Query executed successfully, no rows returned."}
         except Exception as e:
             logger.error(f"Failed to execute query '{query}' on {self.db_url}: {e}")
