@@ -181,7 +181,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            
+            // Check for supported MIME types
+            let mimeType = 'audio/webm';
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                mimeType = 'audio/ogg';
+                if (!MediaRecorder.isTypeSupported('audio/ogg')) {
+                    mimeType = '';
+                }
+            }
+            
+            mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
             audioChunks = [];
 
             mediaRecorder.ondataavailable = event => {
@@ -189,7 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                // Use the same MIME type for the blob
+                const audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
                 await sendAudioToBackend(audioBlob);
                 startSpeechButton.disabled = false;
                 stopSpeechButton.disabled = true;
@@ -213,27 +224,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sendAudioToBackend(audioBlob) {
         try {
-            const { provider } = getLlmConfig();
-            if (!provider) {
-                updateStatus(queryResults, 'Please configure LLM provider first.', 'error');
-                return;
-            }
-
             const formData = new FormData();
-            formData.append('audio_file', audioBlob, 'audio.wav');
-            formData.append('llm_provider', provider);
+            // Use the actual MIME type of the blob for the filename
+            const mimeType = audioBlob.type || 'audio/webm';
+            const extension = mimeType.split('/')[1] || 'webm';
+            formData.append('audio_file', audioBlob, `audio.${extension}`);
 
-            const response = await fetch(`${API_BASE_URL}/query/speech-query`, {
+            const response = await fetch(`${API_BASE_URL}/query/speech-to-text`, {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
 
             if (response.ok) {
-                queryResults.textContent = `Speech Query: "${data.text_query}"\nSQL: "${data.sql_query}"\nResults: ${JSON.stringify(data.results, null, 2)}`;
-                queryResults.style.color = 'var(--text-color, var(--dark-color))';
+                // Display the converted text in the textarea
+                naturalLanguageQuery.value = data.text_query;
+                updateStatus(queryResults, 'Speech converted to text. Review and click Execute Query to run.', 'success');
             } else {
-                updateStatus(queryResults, `Speech query failed: ${data.detail || data.message}`, 'error');
+                updateStatus(queryResults, `Speech conversion failed: ${data.detail || data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error sending audio to backend:', error);

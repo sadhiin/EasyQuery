@@ -4,6 +4,7 @@ from typing import Optional
 import logging
 from decimal import Decimal
 import json
+from datetime import datetime, date, time
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,14 @@ class DatabaseManager:
                             # Convert Decimal to float for JSON serialization
                             if isinstance(value, Decimal):
                                 row_dict[key] = float(value)
+                            # Convert datetime objects to ISO format strings
+                            elif isinstance(value, (datetime, date, time)):
+                                if isinstance(value, datetime):
+                                    row_dict[key] = value.isoformat()
+                                elif isinstance(value, date):
+                                    row_dict[key] = value.isoformat()
+                                elif isinstance(value, time):
+                                    row_dict[key] = value.isoformat()
                             else:
                                 row_dict[key] = value
                         rows.append(row_dict)

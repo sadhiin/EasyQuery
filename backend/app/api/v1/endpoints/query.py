@@ -2,7 +2,7 @@ from typing import Literal
 from fastapi import APIRouter, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from app.models.pydantic_models import QueryRequest
-from app.services.query_service import process_text_query, process_speech_query_service, get_schema
+from app.services.query_service import process_text_query, process_speech_query_service, speech_to_text_only, get_schema
 
 query_router = APIRouter()
 
@@ -21,6 +21,15 @@ async def process_speech_query(
 ):
     session_id = "default_session"
     result = await process_speech_query_service(session_id, audio_file, llm_provider)
+    return JSONResponse(status_code=200, content=result)
+
+
+@query_router.post("/speech-to-text")
+async def convert_speech_to_text(
+    audio_file: UploadFile = File(...)
+):
+    session_id = "default_session"
+    result = await speech_to_text_only(session_id, audio_file)
     return JSONResponse(status_code=200, content=result)
 
 

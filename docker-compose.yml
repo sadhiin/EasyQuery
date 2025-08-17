@@ -1,17 +1,24 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./.env:/app/.env
     environment:
       - DATABASE_URL=sqlite:///./test.db # Example, replace with actual DB connection string or secrets
+    env_file:
+      - ./.env
     depends_on:
       - frontend # Ensure frontend is up before backend for Nginx proxying if needed, though usually backend doesn't depend on frontend
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     volumes:
