@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyQuery - Natural Language to SQL</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-database"></i>
+                <h1>EasyQuery</h1>
+            </div>
+            <p class="tagline">Natural Language to SQL Translator</p>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <section class="connection-section card">
+            <div class="section-header">
+                <i class="fas fa-plug"></i>
+                <h2>Database Connection</h2>
+            </div>
+            <div class="input-group">
+                <label for="dbUrl">Database URL</label>
+                <div class="input-with-button">
+                    <input type="text" id="dbUrl" placeholder="e.g., sqlite:///test.db" autocomplete="off">
+                    <button id="connectDb" class="btn btn-primary">
+                        <i class="fas fa-link"></i>
+                        Connect
+                    </button>
+                </div>
+                <div id="connectionStatus" class="status-message"></div>
+            </div>
+        </section>
+
+<section class="llm-section card">
+            <div class="section-header">
+                <i class="fas fa-robot"></i>
+                <h2>LLM Provider</h2>
+            </div>
+            <div class="input-group">
+                <label for="llmProvider">Select LLM Provider</label>
+                <select id="llmProvider">
+                    <option value="">Select provider</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="groq">Groq</option>
+                </select>
+            </div>
+        </section>
+        <section class="query-section card">
+            <div class="section-header">
+                <i class="fas fa-search"></i>
+                <h2>Query Database</h2>
+            </div>
+            <div class="input-group">
+                <label for="naturalLanguageQuery">Ask a question in natural language</label>
+                <textarea id="naturalLanguageQuery" placeholder="e.g., Show me all users who signed up last month" rows="3"></textarea>
+                <div class="button-group">
+                    <button id="executeQuery" class="btn btn-primary">
+                        <i class="fas fa-play"></i>
+                        Execute Query
+                    </button>
+                    <div class="speech-controls">
+                        <button id="startSpeech" class="btn btn-secondary">
+                            <i class="fas fa-microphone"></i>
+                            Start Speech
+                        </button>
+                        <button id="stopSpeech" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i>
+                            Stop Speech
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-section card">
+            <div class="section-header">
+                <i class="fas fa-table"></i>
+                <h2>Query Results</h2>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="results">Results</button>
+                <button class="tab-btn" data-tab="schema">Database Schema</button>
+            </div>
+            <div class="tab-content">
+                <div id="results-tab" class="tab-pane active">
+                    <div id="queryResults" class="code-block"></div>
+                </div>
+                <div id="schema-tab" class="tab-pane">
+                    <div id="dbSchema" class="code-block"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>EasyQuery &copy; 2025 | Natural Language to SQL Translator</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

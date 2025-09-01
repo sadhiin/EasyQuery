@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: sadhiin/easyquery-backend:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./.env:/app/.env
+    environment:
+      - DATABASE_URL=sqlite:///./test.db # Example, replace with actual DB connection string or secrets
+    env_file:
+      - ./.env
+    depends_on:
+      - frontend # Ensure frontend is up before backend for Nginx proxying if needed, though usually backend doesn't depend on frontend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: sadhiin/easyquery-frontend:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html # Mount frontend files for live changes during development
