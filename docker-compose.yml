@@ -3,6 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: sadhiin/easyquery-backend:latest
     ports:
       - "8000:8000"
     volumes:
@@ -19,6 +20,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: sadhiin/easyquery-frontend:latest
     ports:
       - "80:80"
     volumes:
